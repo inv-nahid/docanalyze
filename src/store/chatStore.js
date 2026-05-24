@@ -15,14 +15,26 @@ export const useChatStore = create(
                     ],
                 })),
 
-            clearChat: () =>
-                set({
-                    messages: [],
+            updateLastMessage: (content) =>
+                set((state) => {
+                    const updated = [...state.messages];
+
+                    updated[updated.length - 1].content =
+                        content;
+
+                    return {
+                        messages: updated,
+                    };
                 }),
 
             setLoading: (value) =>
                 set({
                     loading: value,
+                }),
+
+            clearChat: () =>
+                set({
+                    messages: [],
                 }),
         }),
         {

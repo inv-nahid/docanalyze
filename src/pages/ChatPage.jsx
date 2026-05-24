@@ -18,6 +18,7 @@ export default function ChatPage() {
     const {
         messages,
         addMessage,
+        updateLastMessage,
         loading,
         setLoading,
     } = useChatStore();
@@ -33,18 +34,49 @@ export default function ChatPage() {
         });
 
         setInput("");
-
         setLoading(true);
 
-        try {
-            const res = await api.post("/chat", {
-                question,
-            });
+        addMessage({
+            role: "assistant",
+            content: "",
+            sources: [],
+        });
 
-            addMessage({
-                role: "assistant",
-                content: res.data.answer,
-            });
+        try {
+            const response = await fetch(
+                "http://localhost:8000/chat",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+                    },
+                    body: JSON.stringify({
+                        question,
+                    }),
+                }
+            );
+
+            const reader =
+                response.body.getReader();
+
+            const decoder = new TextDecoder();
+
+            let fullText = "";
+
+            while (true) {
+                const { done, value } =
+                    await reader.read();
+
+                if (done) break;
+
+                const chunk =
+                    decoder.decode(value);
+
+                fullText += chunk;
+
+                updateLastMessage(fullText);
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -76,7 +108,6 @@ export default function ChatPage() {
                             message={msg}
                         />
                     ))}
-                    {loading && <Loader />}
                     <div ref={bottomRef} />
                 </div>
 
@@ -84,14 +115,21 @@ export default function ChatPage() {
                     <div className="max-w-4xl mx-auto flex gap-3">
                         <input
                             value={input}
+                            disabled={loading}
                             onChange={(e) =>
                                 setInput(e.target.value)
                             }
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    handleSend();
+                                }
+                            }}
                             placeholder="Ask anything..."
                             className="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 outline-none"
                         />
 
                         <button
+                            disabled={loading}
                             onClick={handleSend}
                             className="bg-white text-black px-6 rounded-2xl font-semibold"
                         >

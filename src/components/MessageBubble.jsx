@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import SourceCard from "./SourceCard";
 
 export default function MessageBubble({ message }) {
     const isUser = message.role === "user";
@@ -16,7 +17,20 @@ export default function MessageBubble({ message }) {
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {message.content}
                 </ReactMarkdown>
+
+                {message.role === "assistant" &&
+                    message.content.length > 0 && (
+                        <span className="animate-pulse">
+                            ▋
+                        </span>
+                    )}
             </div>
+            {message.sources?.map((source, idx) => (
+                <SourceCard
+                    key={idx}
+                    source={source}
+                />
+            ))}
         </div>
     );
 }
